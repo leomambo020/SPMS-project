@@ -43,6 +43,26 @@ function persistUser(user) {
   else localStorage.removeItem(USER_KEY);
 }
 
+function formatApiError(data, status) {
+  const baseMessage = data?.error || `Request failed with status ${status}`;
+  const details = Array.isArray(data?.details) ? data.details : [];
+
+  if (!details.length) {
+    return baseMessage;
+  }
+
+  const detailText = details
+    .map((detail) => {
+      if (!detail || typeof detail !== 'object') return null;
+      const field = detail.field ? `${detail.field}: ` : '';
+      return `${field}${detail.message || 'Invalid value.'}`;
+    })
+    .filter(Boolean)
+    .join('; ');
+
+  return detailText ? `${baseMessage} ${detailText}` : baseMessage;
+}
+
 export function getAccessToken() {
   return accessToken;
 }
@@ -158,7 +178,7 @@ async function request(path, { method = 'GET', body, params, auth = true, retry 
   const data = await res.json().catch(() => ({}));
 
   if (!res.ok) {
-    const err = new Error(data.error || `Request failed with status ${res.status}`);
+    const err = new Error(formatApiError(data, res.status));
     err.status = res.status;
     err.details = data.details;
     throw err;

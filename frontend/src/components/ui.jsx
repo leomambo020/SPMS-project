@@ -98,7 +98,7 @@ export function Pagination({ page, totalPages, onPageChange }) {
   );
 }
 
-export function Field({ label, children, required = false }) {
+export function Field({ label, children, required = false, error }) {
   return (
     <label className="field">
       <span className="field-label">
@@ -106,6 +106,7 @@ export function Field({ label, children, required = false }) {
         {required && <span className="required"> *</span>}
       </span>
       {children}
+      {error && <span className="field-error">{error}</span>}
     </label>
   );
 }

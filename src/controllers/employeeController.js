@@ -8,16 +8,28 @@ const EMPLOYMENT_STATUSES = ['active', 'on_leave', 'exited'];
 const ACCOUNT_ROLES = ['employee', 'supervisor', 'hr_admin'];
 
 const createEmployeeValidators = [
-  body('fullName').trim().notEmpty().withMessage('fullName is required.'),
-  body('jobTitle').trim().notEmpty().withMessage('jobTitle is required.'),
-  body('contactInfo').trim().notEmpty().withMessage('contactInfo is required.'),
-  body('deptId').optional({ nullable: true }).isInt().withMessage('deptId must be an integer.'),
-  body('employmentStatus').optional().isIn(EMPLOYMENT_STATUSES),
+  body('fullName').trim().notEmpty().withMessage('Full name is required.'),
+  body('jobTitle').trim().notEmpty().withMessage('Job title is required.'),
+  body('contactInfo').trim().notEmpty().withMessage('Contact info is required.'),
+  body('deptId').optional({ nullable: true }).isInt().withMessage('Department must be a valid number.'),
+  body('employmentStatus').optional().isIn(EMPLOYMENT_STATUSES).withMessage(
+    `Employment status must be one of: ${EMPLOYMENT_STATUSES.join(', ')}.`
+  ),
   body('dateHired').optional().isISO8601().withMessage('dateHired must be a valid date.'),
   body('account').optional().isObject(),
-  body('account.username').if(body('account').exists()).trim().notEmpty(),
-  body('account.password').if(body('account').exists()).isLength({ min: 10 }),
-  body('account.role').if(body('account').exists()).isIn(ACCOUNT_ROLES),
+  body('account.username')
+    .if(body('account').exists())
+    .trim()
+    .notEmpty()
+    .withMessage('account.username is required when creating a login account.'),
+  body('account.password')
+    .if(body('account').exists())
+    .isLength({ min: 10 })
+    .withMessage('account.password must be at least 10 characters.'),
+  body('account.role')
+    .if(body('account').exists())
+    .isIn(ACCOUNT_ROLES)
+    .withMessage(`account.role must be one of: ${ACCOUNT_ROLES.join(', ')}.`),
 ];
 
 const updateEmployeeValidators = [

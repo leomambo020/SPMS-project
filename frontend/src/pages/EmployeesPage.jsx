@@ -19,6 +19,34 @@ const EMPTY_FORM = {
   role: 'employee',
 };
 
+function mapEmployeeValidationErrors(details = []) {
+  const fieldErrors = {};
+
+  for (const detail of details) {
+    const rawField = detail?.field;
+    const message = detail?.message || 'Invalid value.';
+    if (!rawField) continue;
+
+    const field = {
+      'fullName': 'fullName',
+      'jobTitle': 'jobTitle',
+      'contactInfo': 'contactInfo',
+      'deptId': 'deptId',
+      'employmentStatus': 'employmentStatus',
+      'dateHired': 'dateHired',
+      'account.username': 'username',
+      'account.password': 'password',
+      'account.role': 'role',
+    }[rawField];
+
+    if (field && !fieldErrors[field]) {
+      fieldErrors[field] = message;
+    }
+  }
+
+  return fieldErrors;
+}
+
 export default function EmployeesPage() {
   const [page, setPage] = useState(1);
   const [filters, setFilters] = useState({});
@@ -26,6 +54,7 @@ export default function EmployeesPage() {
   const [editing, setEditing] = useState(null);
   const [form, setForm] = useState(EMPTY_FORM);
   const [formError, setFormError] = useState(null);
+  const [fieldErrors, setFieldErrors] = useState({});
   const [formSuccess, setFormSuccess] = useState(null);
   const [submitting, setSubmitting] = useState(false);
 
@@ -39,6 +68,7 @@ export default function EmployeesPage() {
   const openCreate = () => {
     setForm(EMPTY_FORM);
     setFormError(null);
+    setFieldErrors({});
     setFormSuccess(null);
     setModal('create');
   };
@@ -57,6 +87,7 @@ export default function EmployeesPage() {
       role: 'employee',
     });
     setFormError(null);
+    setFieldErrors({});
     setFormSuccess(null);
     setModal('edit');
   };
@@ -69,6 +100,7 @@ export default function EmployeesPage() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setFormError(null);
+    setFieldErrors({});
     setFormSuccess(null);
     setSubmitting(true);
 
@@ -102,6 +134,9 @@ export default function EmployeesPage() {
       refetch();
     } catch (err) {
       setFormError(err.message);
+      if (err.details) {
+        setFieldErrors(mapEmployeeValidationErrors(err.details));
+      }
     } finally {
       setSubmitting(false);
     }
@@ -121,6 +156,8 @@ export default function EmployeesPage() {
     setPage(1);
     setFilters((f) => ({ ...f, [key]: value || undefined }));
   };
+
+  const nonFieldError = formError && Object.keys(fieldErrors).length === 0 ? formError : null;
 
   return (
     <div>
@@ -216,7 +253,7 @@ export default function EmployeesPage() {
         title={modal === 'create' ? 'New employee' : `Edit ${editing?.full_name || ''}`}
       >
         <form onSubmit={handleSubmit} className="stack modal-form">
-          <Field label="Full name" required>
+          <Field label="Full name" required error={fieldErrors.fullName}>
             <input
               type="text"
               value={form.fullName}
@@ -224,7 +261,7 @@ export default function EmployeesPage() {
               required
             />
           </Field>
-          <Field label="Job title" required>
+          <Field label="Job title" required error={fieldErrors.jobTitle}>
             <input
               type="text"
               value={form.jobTitle}
@@ -232,7 +269,7 @@ export default function EmployeesPage() {
               required
             />
           </Field>
-          <Field label="Contact info / notification email" required>
+          <Field label="Contact info / notification email" required error={fieldErrors.contactInfo}>
             <input
               type="email"
               value={form.contactInfo}
@@ -241,7 +278,7 @@ export default function EmployeesPage() {
             />
           </Field>
           <div className="two-field">
-            <Field label="Department">
+            <Field label="Department" error={fieldErrors.deptId}>
               <select value={form.deptId} onChange={(e) => setForm((f) => ({ ...f, deptId: e.target.value }))}>
                 <option value="">Unassigned</option>
                 {departmentsData?.data?.map((d) => (
@@ -249,7 +286,7 @@ export default function EmployeesPage() {
                 ))}
               </select>
             </Field>
-            <Field label="Employment status">
+            <Field label="Employment status" error={fieldErrors.employmentStatus}>
               <select value={form.employmentStatus} onChange={(e) => setForm((f) => ({ ...f, employmentStatus: e.target.value }))}>
                 <option value="active">Active</option>
                 <option value="on_leave">On leave</option>
@@ -257,7 +294,7 @@ export default function EmployeesPage() {
               </select>
             </Field>
           </div>
-          <Field label="Date hired">
+          <Field label="Date hired" error={fieldErrors.dateHired}>
             <input
               type="date"
               value={form.dateHired}
@@ -269,7 +306,7 @@ export default function EmployeesPage() {
             <>
               <div className="form-divider">Login account (optional)</div>
               <div className="two-field">
-                <Field label="Username">
+                <Field label="Username" error={fieldErrors.username}>
                   <input
                     type="text"
                     value={form.username}
@@ -277,7 +314,7 @@ export default function EmployeesPage() {
                     autoComplete="off"
                   />
                 </Field>
-                <Field label="Password (min 10 chars)">
+                <Field label="Password (min 10 chars)" error={fieldErrors.password}>
                   <input
                     type="password"
                     value={form.password}
@@ -286,7 +323,7 @@ export default function EmployeesPage() {
                   />
                 </Field>
               </div>
-              <Field label="Role">
+              <Field label="Role" error={fieldErrors.role}>
                 <select value={form.role} onChange={(e) => setForm((f) => ({ ...f, role: e.target.value }))}>
                   <option value="employee">Employee</option>
                   <option value="supervisor">Supervisor</option>
@@ -296,7 +333,7 @@ export default function EmployeesPage() {
             </>
           )}
 
-          <FormError error={formError} />
+          {nonFieldError && <FormError error={nonFieldError} />}
           {formSuccess && <div className="form-success">{formSuccess}</div>}
 
           <div className="modal-actions">

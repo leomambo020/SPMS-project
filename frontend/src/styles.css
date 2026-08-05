@@ -325,6 +325,12 @@ body {
   color: #475569;
 }
 
+.field-error {
+  color: var(--danger);
+  font-size: 12px;
+  margin-top: -2px;
+}
+
 .required {
   color: var(--danger);
 }
